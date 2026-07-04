@@ -1,0 +1,23 @@
+enabled: true
+
+# HTTP API for Discord bots / automation (localhost only by default)
+httpPort: 9877
+bindAddress: "127.0.0.1"
+
+# Required. Set a long random string — the Discord bot sends this as Bearer token.
+apiToken: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
+
+# Optional in-game announcement prefix when crates are dropped via the bridge
+defaultActorName: "Discord"
+
+# MongoDB field names for Discord verification lookup (same as PlayerLookupPlugin)
+userSessionsCollection: "user-sessions"
+authKeysCollection: "verified-authkeys"
+discordIdFields:
+  - discordId
+  - discordUserId
+  - userId
+  - id
+authKeyFields:
+  - authKey
+  - key

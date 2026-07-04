@@ -1,0 +1,11 @@
+{
+  "apiBaseUrl": "http://127.0.0.1:9877",
+  "apiToken": "CHANGE_ME_TO_A_LONG_RANDOM_SECRET",
+
+  "discordToken": "YOUR_DISCORD_BOT_TOKEN",
+  "clientId": "YOUR_DISCORD_APPLICATION_CLIENT_ID",
+  "guildId": "YOUR_DISCORD_GUILD_ID",
+
+  "allowedRoleIds": [],
+  "defaultCrateId": 5063
+}

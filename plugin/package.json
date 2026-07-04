@@ -1,0 +1,17 @@
+{
+  "name": "discord-bridge-plugin",
+  "version": "1.0.0",
+  "description": "HTTP bridge for Discord bots to trigger crate drops and player lookups",
+  "main": "plugin.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "pack:release": "node scripts/pack-release.js"
+  },
+  "keywords": ["h1z1", "h1emu", "plugin", "discord", "crate"],
+  "author": "H1emu",
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "h1z1-server": "*",
+    "typescript": "^5.1.3"
+  }
+}

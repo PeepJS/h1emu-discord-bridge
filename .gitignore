@@ -1,0 +1,9 @@
+node_modules/
+out/
+dist/
+config.json
+*-config.yaml
+!data/defaultconfig.yaml
+!config.example.json
+.env
+*.log
