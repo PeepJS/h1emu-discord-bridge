@@ -11,7 +11,7 @@ This project is split into two parts that talk over a local HTTP API:
 
 The plugin **never connects to Discord directly**. That separation keeps the game server simple, makes the HTTP layer testable without Discord admin access, and lets you swap Discord for another chat platform later.
 
-> **Status:** Private preview — API and bot are functional; live Discord testing requires guild admin access.
+> **Status:** Private preview — API and bot are functional; live Discord testing requires admin access.
 
 ---
 
