@@ -40,7 +40,7 @@ The plugin **never connects to Discord directly**. That separation keeps the gam
 
 ## Why this exists
 
-H1Emu servers already support admin crate drops in-game via commands like `/givereward` and `/giverewardtoall`. Community staff often live in Discord — running events, answering tickets, and coordinating drops from voice channels or mod chat.
+H1Emu servers already support admin crate drops in-game via commands like `/givereward` and `/giverewardtoall`. Staff do not always have access to a desktop / laptop. This solves that problem.
 
 This bridge lets authorized Discord users:
 
@@ -112,7 +112,7 @@ flowchart LR
 |-------------|-------|
 | Node.js 18+ | Can run on the same machine as the game server or elsewhere |
 | Discord application + bot token | [Discord Developer Portal](https://discord.com/developers/applications) |
-| Guild admin (one-time setup) | Invite bot, register slash commands, configure roles |
+| Discord admin (one-time setup) | Invite bot, register slash commands, configure roles |
 | Network path to plugin HTTP API | Default `http://127.0.0.1:9877` if co-located |
 
 ### Optional
@@ -227,7 +227,7 @@ Shows the API bind address and current online player count.
 
 ---
 
-## Installation — server plugin
+## Installation // server plugin
 
 ### Directory layout
 
