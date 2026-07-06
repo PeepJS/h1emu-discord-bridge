@@ -10,7 +10,7 @@
   "supportRoleIds": [],
 
   "supportCrateLimit": 5,
-  "supportCrateWindowHours": 12,
+  "supportCrateWindowHours": 24,
   "supportBlockedCommands": ["giverewardtoall", "globalrewardtoall"],
 
   "rateLimitStateFile": "./data/rate-limits.json",

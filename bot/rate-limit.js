@@ -21,7 +21,7 @@ export function createRateLimiter(config) {
     config.rateLimitStateFile ??
     path.join(__dirname, "data", "rate-limits.json");
   const crateLimit = config.supportCrateLimit ?? 5;
-  const windowMs = (config.supportCrateWindowHours ?? 12) * 60 * 60 * 1000;
+  const windowMs = (config.supportCrateWindowHours ?? 24) * 60 * 60 * 1000;
 
   function ensureDir() {
     fs.mkdirSync(path.dirname(stateFile), { recursive: true });
@@ -73,7 +73,7 @@ export function createRateLimiter(config) {
       resetsAt: entries.length
         ? entries[0].at + windowMs
         : Date.now() + windowMs,
-      windowHours: config.supportCrateWindowHours ?? 12
+      windowHours: config.supportCrateWindowHours ?? 24
     };
   }
 

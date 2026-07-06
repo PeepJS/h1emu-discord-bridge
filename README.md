@@ -332,7 +332,7 @@ Full `config.json` example:
   "supportRoleIds": ["9876543210987654321"],
 
   "supportCrateLimit": 5,
-  "supportCrateWindowHours": 12,
+  "supportCrateWindowHours": 24,
   "defaultCrateId": 5063
 }
 ```
@@ -345,9 +345,9 @@ Full `config.json` example:
 | `clientId` | Application client ID |
 | `guildId` | Discord server ID (guild-scoped slash commands) |
 | `moderatorRoleIds` | Discord roles with **unlimited** crate drops (in-game mod equivalent) |
-| `supportRoleIds` | Discord roles with **rate-limited** drops (5 crates / 12h by default) |
+| `supportRoleIds` | Discord roles with **rate-limited** drops (5 crates / 24h by default) |
 | `supportCrateLimit` | Max crates support can distribute per window (default `5`) |
-| `supportCrateWindowHours` | Rolling window in hours (default `12`) |
+| `supportCrateWindowHours` | Rolling window in hours (default `24`) |
 | `supportBlockedCommands` | Commands support cannot run (default: mass/global drops) |
 | `rateLimitStateFile` | Where per-user usage is persisted (default `./data/rate-limits.json`) |
 | `defaultCrateId` | Crate used when slash command omits the `crate` option |
@@ -414,7 +414,7 @@ Keep this process running (systemd, pm2, Docker, or a screen/tmux session on Lin
 | `moderatorRoleIds` | string[] | no | Unlimited drops. Empty = Administrator only |
 | `supportRoleIds` | string[] | no | Rate-limited support tier |
 | `supportCrateLimit` | number | no | Default `5` |
-| `supportCrateWindowHours` | number | no | Default `12` |
+| `supportCrateWindowHours` | number | no | Default `24` |
 | `defaultCrateId` | number | no | Default `5063` (H1Emu crate) |
 
 ---
@@ -753,7 +753,7 @@ Discord permissions are enforced in the **bot**, not the game server plugin. Two
 | Tier | Config | Limits |
 |------|--------|--------|
 | **Moderator** | `moderatorRoleIds` or Discord Administrator | Unlimited crate drops; all commands |
-| **Support** | `supportRoleIds` | **5 crates per 12 hours** (configurable); `/cratedrop` and `/cratedropdiscord` only |
+| **Support** | `supportRoleIds` | **5 crates per 24 hours** (configurable); `/cratedrop` and `/cratedropdiscord` only |
 
 Mass drops (`/giverewardtoall`, `/globalrewardtoall`) are **moderator-only** by default.
 

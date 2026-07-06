@@ -72,7 +72,7 @@ Support and moderator roles are configured separately:
   "supportRoleIds": ["SUPPORT_ROLE_ID"],
 
   "supportCrateLimit": 5,
-  "supportCrateWindowHours": 12,
+  "supportCrateWindowHours": 24,
   "supportBlockedCommands": ["giverewardtoall", "globalrewardtoall"]
 }
 ```
@@ -80,11 +80,11 @@ Support and moderator roles are configured separately:
 | Tier | Roles | Crate drops |
 |------|-------|-------------|
 | **Moderator** | `moderatorRoleIds` or Discord Administrator | Unlimited; all commands including mass/global drops |
-| **Support** | `supportRoleIds` | Max **5 crates per 12 hours**; individual drops only (`/cratedrop`, `/cratedropdiscord`) |
+| **Support** | `supportRoleIds` | Max **5 crates per 24 hours**; individual drops only (`/cratedrop`, `/cratedropdiscord`) |
 
 Support staff can check remaining quota with `/cratequota` (ephemeral).
 
-Usage is tracked per Discord user in `bot/data/rate-limits.json` (rolling 12-hour window).
+Usage is tracked per Discord user in `bot/data/rate-limits.json` (rolling 24-hour window).
 
 ### 5. Run the bot
 
