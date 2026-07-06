@@ -42,8 +42,23 @@ const commands = [
         .setRequired(false)
     ),
   new SlashCommandBuilder()
-    .setName("crateall")
-    .setDescription("Give reward crate(s) to everyone online")
+    .setName("giverewardtoall")
+    .setDescription("Give reward crate(s) to everyone on this server")
+    .addIntegerOption((opt) =>
+      opt
+        .setName("crate")
+        .setDescription("Crate ID (default from config)")
+        .setRequired(false)
+    )
+    .addStringOption((opt) =>
+      opt
+        .setName("message")
+        .setDescription("Optional in-game announcement override")
+        .setRequired(false)
+    ),
+  new SlashCommandBuilder()
+    .setName("globalrewardtoall")
+    .setDescription("Give reward crate(s) to everyone on all servers")
     .addIntegerOption((opt) =>
       opt
         .setName("crate")

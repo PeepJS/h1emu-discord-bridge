@@ -59,7 +59,7 @@ You can validate the entire game-server integration using the included **CLI tes
 flowchart LR
   subgraph Discord
     Mod[Moderator]
-    Slash["/cratedrop /crateall"]
+    Slash["/cratedrop /giverewardtoall /globalrewardtoall"]
   end
 
   subgraph BotHost["Bot host (Node.js)"]
@@ -84,9 +84,9 @@ flowchart LR
   Plugin -.-> Sessions
 ```
 
-**Request flow for `/crateall`:**
+**Request flow for `/giverewardtoall`:**
 
-1. Moderator runs `/crateall crate:5063` in Discord.
+1. Moderator runs `/giverewardtoall crate:5063` in Discord.
 2. Bot checks the moderator's Discord role against `allowedRoleIds`.
 3. Bot sends `POST /api/crate/drop` with `{ target: { type: "all" }, crateIds: [5063] }`.
 4. Plugin validates the Bearer token and crate ID against `RewardManager.rewards`.
@@ -209,11 +209,12 @@ npm install
 npm run test-api                    # health check (no auth)
 npm run test-api -- players         # online player list
 npm run test-api -- crates          # valid crate IDs
-npm run test-api -- drop-all 5063   # drop H1Emu crate to everyone online
+npm run test-api -- giverewardtoall 5063   # this server only
+npm run test-api -- globalrewardtoall 5063 # all servers
 npm run test-api -- drop-name "YourCharacterName" 5063
 ```
 
-**Success criteria:** `drop-all` or `drop-name` returns `"ok": true` and players receive crates in-game with an alert message.
+**Success criteria:** `giverewardtoall` or `drop-name` returns `"ok": true` and players receive crates in-game with an alert message. `globalrewardtoall` returns `"scope": "global"` and triggers the login-server broadcast.
 
 ### 5. In-game status command
 
@@ -509,10 +510,7 @@ Content-Type: application/json
 
 ```json
 {
-  "target": {
-    "type": "all | name | discordId",
-    "value": "required for name and discordId"
-  },
+  "target": { "type": "all | global | name | discordId", "value": "required for name and discordId" },
   "crateIds": [5063, 5064],
   "actor": "Optional display name for announcements",
   "announce": "Optional custom in-game alert text"
@@ -523,19 +521,30 @@ Content-Type: application/json
 
 | `type` | `value` | Behavior |
 |--------|---------|----------|
-| `all` | omit | Every online player receives all listed crates |
+| `all` | omit | **This server only** — every online player on the connected zone server (`/giverewardtoall`) |
+| `global` | omit | **All servers** — broadcast via login server to every allowed zone (`/globalrewardtoall`) |
 | `name` | in-game character name | Fuzzy name match (same logic as `/givereward`). Player must be online. |
 | `discordId` | Discord snowflake ID | Looks up verified auth key in MongoDB, resolves session GUID, finds online client. Player must be verified **and** online. |
 
 #### Examples
 
-**Drop to everyone:**
+**Drop to everyone on this server (`/giverewardtoall`):**
 
 ```bash
 curl -s -X POST \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"target":{"type":"all"},"crateIds":[5063],"actor":"Event Team","announce":"Community crate drop!"}' \
+  -d '{"target":{"type":"all"},"crateIds":[5063],"actor":"Event Team"}' \
+  http://127.0.0.1:9877/api/crate/drop
+```
+
+**Drop to everyone on all servers (`/globalrewardtoall`):**
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"target":{"type":"global"},"crateIds":[5063],"actor":"Event Team"}' \
   http://127.0.0.1:9877/api/crate/drop
 ```
 
@@ -557,16 +566,30 @@ curl -s -X POST \
 }
 ```
 
-#### Success response `200` (all players)
+#### Success response `200` (this server — `giverewardtoall`)
 
 ```json
 {
   "ok": true,
-  "action": "drop_all",
+  "action": "giverewardtoall",
+  "scope": "server",
   "recipients": ["Player_One", "Player_Two"],
   "crateIds": [5063],
   "crateNames": "REWARD_CRATE_H1EMU",
-  "message": "Event Team has initiated a crate drop for everyone"
+  "message": "Event Team has just initiated a crate drop"
+}
+```
+
+#### Success response `200` (all servers — `globalrewardtoall`)
+
+```json
+{
+  "ok": true,
+  "action": "globalrewardtoall",
+  "scope": "global",
+  "crateIds": [5063],
+  "crateNames": "REWARD_CRATE_H1EMU",
+  "message": "Event Team has just initiated a global crate drop"
 }
 ```
 
@@ -606,7 +629,8 @@ If some crate IDs are invalid but at least one is valid, the drop proceeds and i
 | `/players` | Ephemeral (only you) | Lists online in-game character names |
 | `/crates` | Ephemeral | Shows first 25 crate IDs and names |
 | `/cratedrop` | Public reply | Drop crate(s) to a player by **in-game name** |
-| `/crateall` | Public reply | Drop crate(s) to **everyone online** |
+| `/giverewardtoall` | Public reply | Drop crate(s) to **everyone on this server** |
+| `/globalrewardtoall` | Public reply | Drop crate(s) to **everyone on all servers** |
 | `/cratedropdiscord` | Public reply | Drop crate(s) to a **@Discord user** (verified + in-game) |
 
 ### `/cratedrop`
@@ -617,12 +641,23 @@ If some crate IDs are invalid but at least one is valid, the drop proceeds and i
 | `crate` | no | Crate ID (defaults to `defaultCrateId`) |
 | `message` | no | Custom in-game announcement |
 
-### `/crateall`
+### `/giverewardtoall`
 
 | Option | Required | Description |
 |--------|----------|-------------|
 | `crate` | no | Crate ID |
 | `message` | no | Custom in-game announcement |
+
+Rewards only players connected to **the zone server** the API is attached to. Same as in-game `/giverewardtoall`.
+
+### `/globalrewardtoall`
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `crate` | no | Crate ID |
+| `message` | no | Custom in-game announcement |
+
+Broadcasts through the **login server** to all allowed zone servers. Same as in-game `/globalrewardtoall`. Shows a world broadcast popup to players.
 
 ### `/cratedropdiscord`
 
@@ -748,7 +783,8 @@ npm run test-api                          # help / health
 npm run test-api -- health
 npm run test-api -- players
 npm run test-api -- crates
-npm run test-api -- drop-all 5063
+npm run test-api -- giverewardtoall 5063
+npm run test-api -- globalrewardtoall 5063
 npm run test-api -- drop-name "Name" 5063
 npm run test-api -- drop-discord 123456789012345678 5063
 ```
@@ -768,11 +804,12 @@ npm run pack:release
 | In-game command | Discord / API equivalent |
 |-----------------|--------------------------|
 | `/givereward {id} {player}` | `POST /api/crate/drop` with `target.type: "name"` or `/cratedrop` |
-| `/giverewardtoall {id}` | `POST /api/crate/drop` with `target.type: "all"` or `/crateall` |
+| `/giverewardtoall {id}` | `target.type: "all"` or `/giverewardtoall` |
+| `/globalrewardtoall {id}` | `target.type: "global"` or `/globalrewardtoall` |
 | `/players` | `GET /api/players` or `/players` slash command |
 | N/A (Discord ID) | `target.type: "discordId"` or `/cratedropdiscord` |
 
-The bridge does **not** implement `/globalrewardtoall` (server-wide broadcast popup) yet — it uses in-game alerts via `sendAlertToAll`. See [Roadmap](#roadmap).
+The bridge mirrors in-game behavior: server-scoped drops use `sendAlertToAll`, global drops use `sendGlobalBroadcastRequest` (world broadcast popup on every allowed zone server).
 
 ---
 
@@ -857,7 +894,6 @@ Common crates (not exhaustive — run `GET /api/crates` for your server):
 
 Planned improvements (not yet implemented):
 
-- [ ] `/globalreward`-style server-wide broadcast popup
 - [ ] Webhook notifications back to Discord when drops occur
 - [ ] Scheduled / recurring crate events
 - [ ] Audit log (who dropped what, when)

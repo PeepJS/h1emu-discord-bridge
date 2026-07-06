@@ -29,7 +29,8 @@ npm install
 npm run test-api              # health check
 npm run test-api -- players   # online players
 npm run test-api -- crates    # valid crate IDs
-npm run test-api -- drop-all 5063
+npm run test-api -- giverewardtoall 5063
+npm run test-api -- globalrewardtoall 5063
 npm run test-api -- drop-name "YourCharacter" 5063
 ```
 
@@ -86,7 +87,8 @@ The bot must reach `apiBaseUrl`. Default `http://127.0.0.1:9877` works when the 
 | `/players` | List online players (ephemeral) |
 | `/crates` | List crate IDs (ephemeral) |
 | `/cratedrop player:<name> crate:<id>` | Drop to one player by in-game name |
-| `/crateall crate:<id> message:<text>` | Drop to everyone online |
+| `/giverewardtoall crate:<id> message:<text>` | Drop to everyone on **this server** |
+| `/globalrewardtoall crate:<id> message:<text>` | Drop to everyone on **all servers** |
 | `/cratedropdiscord user:<@user> crate:<id>` | Drop to verified Discord user (must be in-game) |
 
 Default crate ID is `5063` (H1Emu crate) — override with `defaultCrateId` in config.

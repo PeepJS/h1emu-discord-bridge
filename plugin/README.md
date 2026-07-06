@@ -1,6 +1,6 @@
 # DiscordBridgePlugin
 
-Server plugin for [h1z1-server](https://github.com/H1emu/h1z1-server) that exposes a **local HTTP API** for crate drops and player lookups. Pair with the optional [Discord Bridge Bot](../../tools/discord-bridge-bot/) so moderators can run `/cratedrop` and `/crateall` from Discord.
+Server plugin for [h1z1-server](https://github.com/H1emu/h1z1-server) that exposes a **local HTTP API** for crate drops and player lookups. Pair with the optional [Discord Bridge Bot](../bot/) so moderators can run `/cratedrop`, `/giverewardtoall`, and `/globalrewardtoall` from Discord.
 
 ## Architecture
 
@@ -96,7 +96,8 @@ Target types:
 
 | type | value | Description |
 |------|-------|-------------|
-| `all` | — | Every online player |
+| `all` | — | Every online player on **this server** |
+| `global` | — | Every online player on **all servers** (login-server broadcast) |
 | `name` | character name | Match in-game name (fuzzy) |
 | `discordId` | Discord snowflake | Verified player must be online |
 
@@ -110,7 +111,8 @@ npm install
 cp config.example.json config.json
 # Edit config.json — set apiToken to match plugins/discordbridgeplugin-config.yaml
 npm run test-api
-npm run test-api -- drop-all 5063
+npm run test-api -- giverewardtoall 5063
+npm run test-api -- globalrewardtoall 5063
 npm run test-api -- drop-name "PlayerName" 5063
 ```
 

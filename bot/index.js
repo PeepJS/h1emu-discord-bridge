@@ -91,7 +91,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         );
         break;
       }
-      case "crateall": {
+      case "giverewardtoall": {
         await interaction.deferReply();
         const crateIds = crateIdsFromOption(interaction.options.getInteger("crate"));
         const announce = interaction.options.getString("message") ?? undefined;
@@ -102,7 +102,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
           announce
         });
         await interaction.editReply(
-          `Dropped **${data.crateNames}** to **${data.recipients.length}** player(s).\n_${data.message}_`
+          `**[This server]** Dropped **${data.crateNames}** to **${data.recipients.length}** player(s).\n_${data.message}_`
+        );
+        break;
+      }
+      case "globalrewardtoall": {
+        await interaction.deferReply();
+        const crateIds = crateIdsFromOption(interaction.options.getInteger("crate"));
+        const announce = interaction.options.getString("message") ?? undefined;
+        const data = await api.dropCrates({
+          target: { type: "global" },
+          crateIds,
+          actor: interaction.user.username,
+          announce
+        });
+        await interaction.editReply(
+          `**[All servers]** Global drop of **${data.crateNames}** initiated.\n_${data.message}_`
         );
         break;
       }

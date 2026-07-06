@@ -29,7 +29,7 @@ const DEFAULT_CONFIG: PluginConfig = {
 };
 
 interface DropTarget {
-  type: "all" | "name" | "discordId";
+  type: "all" | "global" | "name" | "discordId";
   value?: string;
 }
 
@@ -378,7 +378,7 @@ export default class DiscordBridgePlugin extends BasePlugin {
       const recipients = Object.values(server._clients);
       const message =
         body.announce?.trim() ||
-        `${actor} has initiated a crate drop for everyone`;
+        `${actor} has just initiated a crate drop`;
 
       server.sendAlertToAll(message);
 
@@ -390,8 +390,30 @@ export default class DiscordBridgePlugin extends BasePlugin {
         status: 200,
         body: {
           ok: true,
-          action: "drop_all",
+          action: "giverewardtoall",
+          scope: "server",
           recipients: recipients.map((c) => c.character.name),
+          crateIds: valid,
+          crateNames,
+          invalid: invalid.length ? invalid : undefined,
+          message
+        }
+      };
+    }
+
+    if (target.type === "global") {
+      const message =
+        body.announce?.trim() ||
+        `${actor} has just initiated a global crate drop`;
+
+      server.sendGlobalBroadcastRequest(1, "", message, valid);
+
+      return {
+        status: 200,
+        body: {
+          ok: true,
+          action: "globalrewardtoall",
+          scope: "global",
           crateIds: valid,
           crateNames,
           invalid: invalid.length ? invalid : undefined,

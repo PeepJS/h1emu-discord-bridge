@@ -34,14 +34,29 @@ async function main() {
       console.log(JSON.stringify(data, null, 2));
       break;
     }
-    case "drop-all": {
+    case "drop-all":
+    case "giverewardtoall": {
       const crateIds = args.map(Number).filter((n) => !Number.isNaN(n));
       if (!crateIds.length) {
-        console.error("Usage: npm run test-api -- drop-all <crateId> [crateId...]");
+        console.error("Usage: npm run test-api -- giverewardtoall <crateId> [crateId...]");
         process.exit(1);
       }
       const data = await api.dropCrates({
         target: { type: "all" },
+        crateIds,
+        actor: "CLI test"
+      });
+      console.log(JSON.stringify(data, null, 2));
+      break;
+    }
+    case "globalrewardtoall": {
+      const crateIds = args.map(Number).filter((n) => !Number.isNaN(n));
+      if (!crateIds.length) {
+        console.error("Usage: npm run test-api -- globalrewardtoall <crateId> [crateId...]");
+        process.exit(1);
+      }
+      const data = await api.dropCrates({
+        target: { type: "global" },
         crateIds,
         actor: "CLI test"
       });
@@ -89,7 +104,9 @@ Commands:
   health                         GET /health (no auth)
   players                        List online players
   crates                         List valid crate IDs
-  drop-all <id> [id...]          Crate drop for everyone
+  drop-all <id> [id...]          Alias for giverewardtoall
+  giverewardtoall <id> [id...]   Crate drop for everyone on this server
+  globalrewardtoall <id> [id...] Crate drop for everyone on all servers
   drop-name <name> <id> [id...]  Crate drop for one player by name
   drop-discord <id> <crate...>   Crate drop by verified Discord user ID
 `);
