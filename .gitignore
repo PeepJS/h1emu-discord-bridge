@@ -2,6 +2,8 @@ node_modules/
 out/
 dist/
 config.json
+bot/config.json
+bot/data/
 *-config.yaml
 !data/defaultconfig.yaml
 !config.example.json

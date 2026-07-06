@@ -6,6 +6,13 @@
   "clientId": "YOUR_DISCORD_APPLICATION_CLIENT_ID",
   "guildId": "YOUR_DISCORD_GUILD_ID",
 
-  "allowedRoleIds": [],
+  "moderatorRoleIds": [],
+  "supportRoleIds": [],
+
+  "supportCrateLimit": 5,
+  "supportCrateWindowHours": 12,
+  "supportBlockedCommands": ["giverewardtoall", "globalrewardtoall"],
+
+  "rateLimitStateFile": "./data/rate-limits.json",
   "defaultCrateId": 5063
 }

@@ -87,7 +87,7 @@ flowchart LR
 **Request flow for `/giverewardtoall`:**
 
 1. Moderator runs `/giverewardtoall crate:5063` in Discord.
-2. Bot checks the moderator's Discord role against `allowedRoleIds`.
+2. Bot checks the user's Discord role tier (support vs moderator).
 3. Bot sends `POST /api/crate/drop` with `{ target: { type: "all" }, crateIds: [5063] }`.
 4. Plugin validates the Bearer token and crate ID against `RewardManager.rewards`.
 5. Plugin calls `rewardManager.addRewardToPlayer()` for each online client (same path as `/giverewardtoall`).
@@ -328,7 +328,11 @@ Full `config.json` example:
   "clientId": "YOUR_APPLICATION_CLIENT_ID",
   "guildId": "YOUR_GUILD_ID",
 
-  "allowedRoleIds": ["1234567890123456789"],
+  "moderatorRoleIds": ["1234567890123456789"],
+  "supportRoleIds": ["9876543210987654321"],
+
+  "supportCrateLimit": 5,
+  "supportCrateWindowHours": 12,
   "defaultCrateId": 5063
 }
 ```
@@ -340,7 +344,12 @@ Full `config.json` example:
 | `discordToken` | Bot token from Developer Portal |
 | `clientId` | Application client ID |
 | `guildId` | Discord server ID (guild-scoped slash commands) |
-| `allowedRoleIds` | Discord role IDs allowed to run admin commands. Empty = require Administrator permission |
+| `moderatorRoleIds` | Discord roles with **unlimited** crate drops (in-game mod equivalent) |
+| `supportRoleIds` | Discord roles with **rate-limited** drops (5 crates / 12h by default) |
+| `supportCrateLimit` | Max crates support can distribute per window (default `5`) |
+| `supportCrateWindowHours` | Rolling window in hours (default `12`) |
+| `supportBlockedCommands` | Commands support cannot run (default: mass/global drops) |
+| `rateLimitStateFile` | Where per-user usage is persisted (default `./data/rate-limits.json`) |
 | `defaultCrateId` | Crate used when slash command omits the `crate` option |
 
 ### Step 4 — Register slash commands
@@ -402,7 +411,10 @@ Keep this process running (systemd, pm2, Docker, or a screen/tmux session on Lin
 | `discordToken` | string | for bot | Bot token |
 | `clientId` | string | for bot | Application client ID |
 | `guildId` | string | for bot | Target guild for slash commands |
-| `allowedRoleIds` | string[] | no | Moderator role IDs. Empty = Administrator only |
+| `moderatorRoleIds` | string[] | no | Unlimited drops. Empty = Administrator only |
+| `supportRoleIds` | string[] | no | Rate-limited support tier |
+| `supportCrateLimit` | number | no | Default `5` |
+| `supportCrateWindowHours` | number | no | Default `12` |
 | `defaultCrateId` | number | no | Default `5063` (H1Emu crate) |
 
 ---
@@ -626,7 +638,7 @@ If some crate IDs are invalid but at least one is valid, the drop proceeds and i
 
 | Command | Visibility | Description |
 |---------|------------|-------------|
-| `/players` | Ephemeral (only you) | Lists online in-game character names |
+| `/cratequota` | Ephemeral | Check support quota or moderator unlimited status |
 | `/crates` | Ephemeral | Shows first 25 crate IDs and names |
 | `/cratedrop` | Public reply | Drop crate(s) to a player by **in-game name** |
 | `/giverewardtoall` | Public reply | Drop crate(s) to **everyone on this server** |
@@ -734,6 +746,21 @@ For anything beyond a trusted LAN:
 
 ---
 
+## Role tiers & rate limits
+
+Discord permissions are enforced in the **bot**, not the game server plugin. Two tiers:
+
+| Tier | Config | Limits |
+|------|--------|--------|
+| **Moderator** | `moderatorRoleIds` or Discord Administrator | Unlimited crate drops; all commands |
+| **Support** | `supportRoleIds` | **5 crates per 12 hours** (configurable); `/cratedrop` and `/cratedropdiscord` only |
+
+Mass drops (`/giverewardtoall`, `/globalrewardtoall`) are **moderator-only** by default.
+
+Support usage is tracked per Discord user ID in a rolling window. After each successful drop, the bot shows remaining quota. Support can run `/cratequota` anytime.
+
+> **Note:** In-game mod permissions are separate. A player with in-game `/givereward` access is not rate-limited by this bot — these limits apply only to Discord commands.
+
 ## Security
 
 | Risk | Mitigation |
@@ -741,7 +768,7 @@ For anything beyond a trusted LAN:
 | Unauthorized crate drops | Bearer token on all `/api/*` routes; long random secret |
 | Token leakage | Never commit `config.json` or `discordbridgeplugin-config.yaml` with real secrets |
 | API exposed to internet | Default bind is localhost; use TLS + IP allowlist if remote |
-| Discord command abuse | `allowedRoleIds` or Administrator check on every slash command |
+| Discord command abuse | Role tiers + support rate limits; mass drops moderator-only |
 | Bot token theft | Treat like a password; reset in Developer Portal if leaked |
 
 The plugin uses the same reward delivery path as in-game admin commands — it cannot create arbitrary items, only crates listed in `RewardManager.rewards`.
@@ -876,7 +903,8 @@ Common crates (not exhaustive — run `GET /api/crates` for your server):
 | Symptom | Fix |
 |---------|-----|
 | Slash commands not visible | Run `npm run register-commands`; wait ~1 minute |
-| "You do not have permission" | Add your role ID to `allowedRoleIds` or grant Administrator |
+| "You do not have permission" | Add role to `moderatorRoleIds` or `supportRoleIds` |
+| Support limit reached | Check `/cratequota`; wait for rolling window expiry |
 | Bot online but commands fail | Check bot can reach `apiBaseUrl`; test with `npm run test-api` from same host |
 | Invalid token on login | Reset bot token in Developer Portal, update `config.json` |
 

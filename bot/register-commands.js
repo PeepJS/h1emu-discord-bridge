@@ -15,6 +15,9 @@ const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
 
 const commands = [
   new SlashCommandBuilder()
+    .setName("cratequota")
+    .setDescription("Check your remaining support crate drop quota"),
+  new SlashCommandBuilder()
     .setName("players")
     .setDescription("List players currently online on the H1Emu server"),
   new SlashCommandBuilder()

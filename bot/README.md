@@ -62,15 +62,29 @@ npm run register-commands
 
 Commands appear in your guild within a minute.
 
-### 4. Configure permissions
+### 4. Configure role tiers
 
-In `config.json`:
+Support and moderator roles are configured separately:
 
 ```json
-"allowedRoleIds": ["123456789012345678"]
+{
+  "moderatorRoleIds": ["MOD_ROLE_ID"],
+  "supportRoleIds": ["SUPPORT_ROLE_ID"],
+
+  "supportCrateLimit": 5,
+  "supportCrateWindowHours": 12,
+  "supportBlockedCommands": ["giverewardtoall", "globalrewardtoall"]
+}
 ```
 
-Leave empty to require Discord **Administrator** permission.
+| Tier | Roles | Crate drops |
+|------|-------|-------------|
+| **Moderator** | `moderatorRoleIds` or Discord Administrator | Unlimited; all commands including mass/global drops |
+| **Support** | `supportRoleIds` | Max **5 crates per 12 hours**; individual drops only (`/cratedrop`, `/cratedropdiscord`) |
+
+Support staff can check remaining quota with `/cratequota` (ephemeral).
+
+Usage is tracked per Discord user in `bot/data/rate-limits.json` (rolling 12-hour window).
 
 ### 5. Run the bot
 
@@ -84,6 +98,7 @@ The bot must reach `apiBaseUrl`. Default `http://127.0.0.1:9877` works when the 
 
 | Command | Description |
 |---------|-------------|
+| `/cratequota` | Check support quota (moderators see unlimited notice) |
 | `/players` | List online players (ephemeral) |
 | `/crates` | List crate IDs (ephemeral) |
 | `/cratedrop player:<name> crate:<id>` | Drop to one player by in-game name |
@@ -109,7 +124,8 @@ If the bot runs on a different machine:
 | `ECONNREFUSED` | Zone server not running or wrong `apiBaseUrl` |
 | Discord commands missing | Run `npm run register-commands` |
 | Player not found (discord) | User must verify in Discord **and** be online in-game |
-| Permission denied in Discord | Add your role ID to `allowedRoleIds` |
+| Permission denied in Discord | Add role to `moderatorRoleIds` or `supportRoleIds` |
+| Support limit reached | Wait for rolling window or ask a moderator; check `/cratequota` |
 
 ## License
 
