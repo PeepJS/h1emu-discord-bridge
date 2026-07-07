@@ -7,9 +7,6 @@ bindAddress: "127.0.0.1"
 # Required. Set a long random string — the Discord bot sends this as Bearer token.
 apiToken: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
 
-# Optional display name returned by GET /health (use the same id in bot config servers[])
-serverName: "Survival #1"
-
 # Optional in-game announcement prefix when crates are dropped via the bridge
 defaultActorName: "Discord"
 
