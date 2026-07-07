@@ -62,4 +62,11 @@ export class BridgeApiClient {
       body: { target, crateIds, actor, announce }
     });
   }
+
+  sendAlert({ message, scope, actor }) {
+    return this.request("/api/alert", {
+      method: "POST",
+      body: { message, scope, actor }
+    });
+  }
 }

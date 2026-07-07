@@ -40,6 +40,12 @@ interface DropRequestBody {
   actor?: string;
 }
 
+interface AlertRequestBody {
+  message?: string;
+  scope?: "server" | "global";
+  actor?: string;
+}
+
 function firstDefinedField(
   document: Record<string, unknown> | null | undefined,
   fields: string[]
@@ -217,6 +223,13 @@ export default class DiscordBridgePlugin extends BasePlugin {
         return;
       }
 
+      if (url.pathname === "/api/alert" && method === "POST") {
+        const body = (await readJsonBody(req)) as AlertRequestBody;
+        const result = this.handleAlert(body);
+        sendJson(res, result.status, result.body);
+        return;
+      }
+
       sendJson(res, 404, { ok: false, error: "Not found" });
     } catch (error) {
       console.error("[DiscordBridgePlugin]", error);
@@ -323,6 +336,53 @@ export default class DiscordBridgePlugin extends BasePlugin {
     for (const crateId of crateIds) {
       server.rewardManager.addRewardToPlayer(client, crateId);
     }
+  }
+
+  private handleAlert(body: AlertRequestBody): {
+    status: number;
+    body: Record<string, unknown>;
+  } {
+    const server = this.server;
+    if (!server) {
+      return { status: 503, body: { ok: false, error: "Server not ready" } };
+    }
+
+    const message = body.message?.trim();
+    if (!message) {
+      return {
+        status: 400,
+        body: { ok: false, error: "message is required" }
+      };
+    }
+
+    const scope = body.scope === "global" ? "global" : "server";
+    const actor = body.actor?.trim() || this.config.defaultActorName;
+
+    if (scope === "global") {
+      server.sendGlobalBroadcastRequest(0, actor, message);
+      return {
+        status: 200,
+        body: {
+          ok: true,
+          action: "globalalert",
+          scope: "global",
+          message,
+          actor
+        }
+      };
+    }
+
+    server.sendAlertToAll(message, actor);
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        action: "alert",
+        scope: "server",
+        message,
+        actor
+      }
+    };
   }
 
   private async handleCrateDrop(body: DropRequestBody): Promise<{

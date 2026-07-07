@@ -144,6 +144,31 @@ client.on(Events.InteractionCreate, async (interaction) => {
         );
         break;
       }
+      case "alert": {
+        if (tier !== "moderator") {
+          await interaction.reply({
+            content: "Only moderators can send in-game alerts.",
+            ephemeral: true
+          });
+          return;
+        }
+
+        await interaction.deferReply();
+        const message = interaction.options.getString("message", true);
+        const scope = interaction.options.getString("scope") ?? "server";
+        const data = await api.sendAlert({
+          message,
+          scope,
+          actor: `${interaction.user.username} (${tierLabel(tier)})`
+        });
+
+        const scopeLabel =
+          data.scope === "global" ? "All servers" : "This server";
+        await interaction.editReply(
+          `**[${scopeLabel}]** Alert sent.\n_${data.message}_`
+        );
+        break;
+      }
       case "cratedrop": {
         const crateIds = crateIdsFromOption(interaction.options.getInteger("crate"));
         const gate = await enforceDropPermission(interaction, "cratedrop", crateIds);

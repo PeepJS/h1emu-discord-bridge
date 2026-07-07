@@ -97,6 +97,29 @@ async function main() {
       console.log(JSON.stringify(data, null, 2));
       break;
     }
+    case "alert": {
+      const scopeArg = args[args.length - 1];
+      const scope =
+        scopeArg === "global" || scopeArg === "server"
+          ? scopeArg
+          : "server";
+      const messageParts =
+        scopeArg === "global" || scopeArg === "server"
+          ? args.slice(0, -1)
+          : args;
+      const message = messageParts.join(" ").trim();
+      if (!message) {
+        console.error('Usage: npm run test-api -- alert "Your message here" [server|global]');
+        process.exit(1);
+      }
+      const data = await api.sendAlert({
+        message,
+        scope,
+        actor: "CLI test"
+      });
+      console.log(JSON.stringify(data, null, 2));
+      break;
+    }
     default:
       console.log(`H1Emu Discord Bridge — API test CLI
 
@@ -104,6 +127,7 @@ Commands:
   health                         GET /health (no auth)
   players                        List online players
   crates                         List valid crate IDs
+  alert "message" [server|global]  In-game alert (default: this server)
   drop-all <id> [id...]          Alias for giverewardtoall
   giverewardtoall <id> [id...]   Crate drop for everyone on this server
   globalrewardtoall <id> [id...] Crate drop for everyone on all servers

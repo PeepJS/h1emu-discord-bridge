@@ -18,6 +18,25 @@ const commands = [
     .setName("cratequota")
     .setDescription("Check your remaining support crate drop quota"),
   new SlashCommandBuilder()
+    .setName("alert")
+    .setDescription("Send an in-game alert (this server or all servers)")
+    .addStringOption((opt) =>
+      opt
+        .setName("message")
+        .setDescription("Alert text shown to players")
+        .setRequired(true)
+    )
+    .addStringOption((opt) =>
+      opt
+        .setName("scope")
+        .setDescription("Who receives the alert (default: this server)")
+        .setRequired(false)
+        .addChoices(
+          { name: "This server", value: "server" },
+          { name: "All servers", value: "global" }
+        )
+    ),
+  new SlashCommandBuilder()
     .setName("players")
     .setDescription("List players currently online on the H1Emu server"),
   new SlashCommandBuilder()
