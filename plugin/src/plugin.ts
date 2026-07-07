@@ -10,6 +10,7 @@ interface PluginConfig {
   bindAddress: string;
   apiToken: string;
   defaultActorName: string;
+  serverName: string;
   userSessionsCollection: string;
   authKeysCollection: string;
   discordIdFields: string[];
@@ -22,6 +23,7 @@ const DEFAULT_CONFIG: PluginConfig = {
   bindAddress: "127.0.0.1",
   apiToken: "",
   defaultActorName: "Discord",
+  serverName: "",
   userSessionsCollection: "user-sessions",
   authKeysCollection: "verified-authkeys",
   discordIdFields: ["discordId", "discordUserId", "userId", "id"],
@@ -190,6 +192,8 @@ export default class DiscordBridgePlugin extends BasePlugin {
           ok: true,
           plugin: this.name,
           version: this.version,
+          serverName: this.config.serverName || undefined,
+          worldId: this.server?._worldId,
           playersOnline: Object.keys(this.server?._clients ?? {}).length
         });
         return;

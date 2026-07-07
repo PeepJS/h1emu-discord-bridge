@@ -2,13 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client, Events, GatewayIntentBits } from "discord.js";
-import { BridgeApiClient } from "./api-client.js";
 import { createRateLimiter } from "./rate-limit.js";
 import {
   getPermissionTier,
   isCommandBlockedForSupport,
   tierLabel
 } from "./permissions.js";
+import { createServerRegistry } from "./servers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const configPath = path.join(__dirname, "config.json");
@@ -19,7 +19,7 @@ if (!fs.existsSync(configPath)) {
 }
 
 const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-const api = new BridgeApiClient(config);
+const serverRegistry = createServerRegistry(config);
 const rateLimiter = createRateLimiter(config);
 
 function crateIdsFromOption(crateOption) {
@@ -39,7 +39,11 @@ function formatQuota(usage) {
   return `${usage.remaining}/${usage.limit} crates remaining (${usage.used} used in the last ${usage.windowHours}h)`;
 }
 
-async function enforceDropPermission(interaction, commandName, crateIds) {
+function serverTag(server, scopeLabel) {
+  return `**[${server.name}${scopeLabel ? ` · ${scopeLabel}` : ""}]**`;
+}
+
+async function enforceDropPermission(interaction, commandName, crateIds, api) {
   const tier = getPermissionTier(interaction, config);
 
   if (tier === "none") {
@@ -78,11 +82,17 @@ async function enforceDropPermission(interaction, commandName, crateIds) {
   return { ok: true, tier, crateCount, usage: check.usage };
 }
 
+function resolveTarget(interaction) {
+  return serverRegistry.resolveFromInteraction(interaction);
+}
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.once(Events.ClientReady, (c) => {
   console.log(`Discord bridge bot logged in as ${c.user.tag}`);
-  console.log(`Game API: ${config.apiBaseUrl}`);
+  for (const server of serverRegistry.servers) {
+    console.log(`  ${server.name} (${server.id}) -> ${server.apiBaseUrl}`);
+  }
   if (config.supportRoleIds?.length) {
     console.log(
       `Support rate limit: ${rateLimiter.crateLimit} crates / ${(rateLimiter.windowMs / 3600000).toFixed(0)}h`
@@ -124,15 +134,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
         break;
       }
       case "players": {
+        const { server, client: api } = resolveTarget(interaction);
         await interaction.deferReply({ ephemeral: true });
         const data = await api.listPlayers();
         const lines = data.players?.length
           ? data.players.map((p) => `• ${p.name}`).join("\n")
           : "_No players online._";
-        await interaction.editReply(`**Online (${data.players.length})**\n${lines}`);
+        await interaction.editReply(
+          `${serverTag(server)}\n**Online (${data.players.length})**\n${lines}`
+        );
         break;
       }
       case "crates": {
+        const { server, client: api } = resolveTarget(interaction);
         await interaction.deferReply({ ephemeral: true });
         const data = await api.listCrates();
         const lines = (data.crates ?? [])
@@ -140,7 +154,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .map((c) => `\`${c.id}\` — ${c.name}`)
           .join("\n");
         await interaction.editReply(
-          `**Reward crates** (first 25)\n${lines}\n\nUse \`/cratedrop\` with a crate ID.`
+          `${serverTag(server)}\n**Reward crates** (first 25)\n${lines}\n\nUse \`/cratedrop\` with a crate ID.`
         );
         break;
       }
@@ -153,6 +167,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           return;
         }
 
+        const { server, client: api } = resolveTarget(interaction);
         await interaction.deferReply();
         const message = interaction.options.getString("message", true);
         const scope = interaction.options.getString("scope") ?? "server";
@@ -165,13 +180,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const scopeLabel =
           data.scope === "global" ? "All servers" : "This server";
         await interaction.editReply(
-          `**[${scopeLabel}]** Alert sent.\n_${data.message}_`
+          `${serverTag(server, scopeLabel)} Alert sent.\n_${data.message}_`
         );
         break;
       }
       case "cratedrop": {
+        const { server, client: api } = resolveTarget(interaction);
         const crateIds = crateIdsFromOption(interaction.options.getInteger("crate"));
-        const gate = await enforceDropPermission(interaction, "cratedrop", crateIds);
+        const gate = await enforceDropPermission(
+          interaction,
+          "cratedrop",
+          crateIds,
+          api
+        );
         if (!gate.ok) {
           await interaction.reply({ content: gate.reply, ephemeral: true });
           return;
@@ -197,16 +218,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
             : "";
 
         await interaction.editReply(
-          `Dropped **${data.crateNames}** to **${data.player}**.\n_${data.message}_${quota}`
+          `${serverTag(server)} Dropped **${data.crateNames}** to **${data.player}**.\n_${data.message}_${quota}`
         );
         break;
       }
       case "giverewardtoall": {
+        const { server, client: api } = resolveTarget(interaction);
         const crateIds = crateIdsFromOption(interaction.options.getInteger("crate"));
         const gate = await enforceDropPermission(
           interaction,
           "giverewardtoall",
-          crateIds
+          crateIds,
+          api
         );
         if (!gate.ok) {
           await interaction.reply({ content: gate.reply, ephemeral: true });
@@ -223,16 +246,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
 
         await interaction.editReply(
-          `**[This server]** Dropped **${data.crateNames}** to **${data.recipients.length}** player(s).\n_${data.message}_`
+          `${serverTag(server, "This server")} Dropped **${data.crateNames}** to **${data.recipients.length}** player(s).\n_${data.message}_`
         );
         break;
       }
       case "globalrewardtoall": {
+        const { server, client: api } = resolveTarget(interaction);
         const crateIds = crateIdsFromOption(interaction.options.getInteger("crate"));
         const gate = await enforceDropPermission(
           interaction,
           "globalrewardtoall",
-          crateIds
+          crateIds,
+          api
         );
         if (!gate.ok) {
           await interaction.reply({ content: gate.reply, ephemeral: true });
@@ -249,16 +274,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
 
         await interaction.editReply(
-          `**[All servers]** Global drop of **${data.crateNames}** initiated.\n_${data.message}_`
+          `${serverTag(server, "All servers")} Global drop of **${data.crateNames}** initiated.\n_${data.message}_`
         );
         break;
       }
       case "cratedropdiscord": {
+        const { server, client: api } = resolveTarget(interaction);
         const crateIds = crateIdsFromOption(interaction.options.getInteger("crate"));
         const gate = await enforceDropPermission(
           interaction,
           "cratedropdiscord",
-          crateIds
+          crateIds,
+          api
         );
         if (!gate.ok) {
           await interaction.reply({ content: gate.reply, ephemeral: true });
@@ -283,7 +310,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
             : "";
 
         await interaction.editReply(
-          `Dropped **${data.crateNames}** to **${data.player}** (Discord: ${user.tag}).\n_${data.message}_${quota}`
+          `${serverTag(server)} Dropped **${data.crateNames}** to **${data.player}** (Discord: ${user.tag}).\n_${data.message}_${quota}`
         );
         break;
       }

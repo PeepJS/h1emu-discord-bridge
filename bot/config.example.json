@@ -1,4 +1,18 @@
 {
+  "defaultServerId": "survival-1",
+  "servers": [
+    {
+      "id": "survival-1",
+      "name": "Survival #1",
+      "apiBaseUrl": "http://127.0.0.1:9877"
+    },
+    {
+      "id": "survival-2",
+      "name": "Survival #2",
+      "apiBaseUrl": "http://127.0.0.1:9878"
+    }
+  ],
+
   "apiBaseUrl": "http://127.0.0.1:9877",
   "apiToken": "CHANGE_ME_TO_A_LONG_RANDOM_SECRET",
 
